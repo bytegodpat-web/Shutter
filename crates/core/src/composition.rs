@@ -158,7 +158,11 @@ impl Composition {
             cam.fog_far.set_base(distance * 2.0);
         }
 
-        self.layers.push(Layer::new(id, name.into(), kind, position, self.duration));
+        let mut layer = Layer::new(id, name.into(), kind, position, self.duration);
+        // Las formas nuevas ocupan un cuarto del lado corto del lienzo.
+        let side = self.width.min(self.height) as f32 / 4.0;
+        layer.size.set_base([side, side]);
+        self.layers.push(layer);
         id
     }
 
@@ -383,6 +387,13 @@ mod tests {
         let b = c.add_layer("B", shape());
         assert_ne!(a, b);
         assert_eq!(c.layer(a).unwrap().transform.position.value_at(0.0), [540.0, 540.0, 0.0]);
+    }
+
+    #[test]
+    fn new_layers_are_a_quarter_of_the_short_side() {
+        let mut c = comp();
+        let id = c.add_layer("A", shape());
+        assert_eq!(c.layer(id).unwrap().size.value_at(0.0), [270.0, 270.0]);
     }
 
     #[test]

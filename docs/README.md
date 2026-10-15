@@ -9,7 +9,7 @@
 
 0. `shutter-input`: traducción de gestos (hecho).
 1. `shutter-core` y `shutter-anim`: modelo y keyframes (hecho).
-2. Render de capas animadas con `wgpu`.
+2. Render de capas animadas: evaluación de la escena y rasterizador por CPU (hecho); backend `wgpu` (pendiente).
 3. Timeline, panel de propiedades y editor de curvas.
 4. Video, audio y exportación.
 5. Grupos, máscaras, modos de mezcla y efectos.

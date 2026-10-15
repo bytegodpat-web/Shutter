@@ -1,0 +1,11 @@
+[package]
+name = "shutter-render"
+description = "Evalúa una composición en un instante y la dibuja (rasterizador por CPU de referencia)."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+shutter-anim.workspace = true
+shutter-core.workspace = true
+tiny-skia.workspace = true

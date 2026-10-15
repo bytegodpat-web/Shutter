@@ -4,6 +4,22 @@ use shutter_anim::Property;
 
 pub type LayerId = u64;
 
+/// Azul por defecto de las formas nuevas (#4792E1).
+pub const DEFAULT_FILL: [f32; 4] = [71.0 / 255.0, 146.0 / 255.0, 225.0 / 255.0, 1.0];
+
+/// Relleno de una capa. Los colores son RGBA en `[0, 1]`, sin premultiplicar.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum Fill {
+    None,
+    Solid(Property<[f32; 4]>),
+}
+
+impl Default for Fill {
+    fn default() -> Self {
+        Fill::Solid(Property::new(DEFAULT_FILL))
+    }
+}
+
 /// Transformación 2D/3D de una capa. Todos los campos son animables.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Transform {
@@ -125,6 +141,9 @@ pub struct Layer {
     /// Grupo que contiene a esta capa.
     pub container: Option<LayerId>,
     pub transform: Transform,
+    /// Ancho y alto base en píxeles, antes de aplicar la escala.
+    pub size: Property<[f32; 2]>,
+    pub fill: Fill,
     /// De 0.0 a 1.0.
     pub opacity: Property<f32>,
     pub blend: BlendMode,
@@ -143,6 +162,8 @@ impl Layer {
             parent: None,
             container: None,
             transform: Transform::at(position),
+            size: Property::new([200.0, 200.0]),
+            fill: Fill::default(),
             opacity: Property::new(1.0),
             blend: BlendMode::Normal,
             start: 0.0,
@@ -181,6 +202,13 @@ mod tests {
         assert!(!LayerKind::Null.is_visual());
         assert!(!LayerKind::Camera(CameraOptions::default()).is_visual());
         assert!(!LayerKind::Audio { path: String::new(), volume: Property::new(100.0) }.is_visual());
+    }
+
+    #[test]
+    fn new_layers_have_a_default_size_and_blue_fill() {
+        let l = Layer::new(1, "a".into(), LayerKind::Drawing, [0.0; 3], 5.0);
+        assert_eq!(l.size.value_at(0.0), [200.0, 200.0]);
+        assert_eq!(l.fill, Fill::Solid(Property::new(DEFAULT_FILL)));
     }
 
     #[test]

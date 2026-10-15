@@ -10,4 +10,4 @@ mod layer;
 
 pub use blend::{BlendGroup, BlendMode};
 pub use composition::{AspectRatio, Background, Composition, HierarchyError, Project, Resolution};
-pub use layer::{CameraOptions, Layer, LayerId, LayerKind, ShapeKind, Transform};
+pub use layer::{CameraOptions, Fill, Layer, LayerId, LayerKind, ShapeKind, Transform, DEFAULT_FILL};
