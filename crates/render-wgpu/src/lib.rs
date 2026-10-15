@@ -52,7 +52,9 @@ impl std::fmt::Display for GpuError {
             Self::NoAdapter(e) => write!(f, "no se encontró un adaptador wgpu: {e}"),
             Self::RequestDevice(e) => write!(f, "no se pudo crear el dispositivo wgpu: {e}"),
             Self::InvalidSize => write!(f, "el tamaño de la composición debe ser mayor que cero"),
-            Self::UnsupportedBlend(mode) => write!(f, "el backend wgpu inicial aún no admite el modo {mode:?}"),
+            Self::UnsupportedBlend(mode) => {
+                write!(f, "el backend wgpu inicial aún no admite el modo {mode:?}")
+            }
             Self::Readback(e) => write!(f, "falló la lectura de la textura GPU: {e}"),
             Self::DevicePoll(e) => write!(f, "falló la espera del dispositivo GPU: {e}"),
         }
@@ -200,10 +202,18 @@ impl GpuRenderer {
             let first = vertices.len() as u32;
             let center = to_clip(item.transform.apply(0.0, 0.0), scene.width, scene.height);
             for (index, point) in points.iter().enumerate() {
-                let a = to_clip(item.transform.apply(point.0, point.1), scene.width, scene.height);
+                let a = to_clip(
+                    item.transform.apply(point.0, point.1),
+                    scene.width,
+                    scene.height,
+                );
                 let next = (index + 1) % points.len();
                 let next_point = points[next];
-                let b = to_clip(item.transform.apply(next_point.0, next_point.1), scene.width, scene.height);
+                let b = to_clip(
+                    item.transform.apply(next_point.0, next_point.1),
+                    scene.width,
+                    scene.height,
+                );
                 vertices.push(Vertex { position: center, color: rgba });
                 vertices.push(Vertex { position: a, color: rgba });
                 vertices.push(Vertex { position: b, color: rgba });
@@ -213,11 +223,7 @@ impl GpuRenderer {
 
         let texture = self.device.create_texture(&wgpu::TextureDescriptor {
             label: Some("shutter-render-wgpu-output"),
-            size: wgpu::Extent3d {
-                width: scene.width,
-                height: scene.height,
-                depth_or_array_layers: 1,
-            },
+            size: wgpu::Extent3d { width: scene.width, height: scene.height, depth_or_array_layers: 1 },
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
@@ -289,11 +295,7 @@ impl GpuRenderer {
                     rows_per_image: Some(scene.height),
                 },
             },
-            wgpu::Extent3d {
-                width: scene.width,
-                height: scene.height,
-                depth_or_array_layers: 1,
-            },
+            wgpu::Extent3d { width: scene.width, height: scene.height, depth_or_array_layers: 1 },
         );
         self.queue.submit([encoder.finish()]);
 
@@ -342,10 +344,7 @@ fn background_color(background: Background) -> wgpu::Color {
 }
 
 fn to_clip(point: (f32, f32), width: u32, height: u32) -> [f32; 2] {
-    [
-        point.0 / width as f32 * 2.0 - 1.0,
-        1.0 - point.1 / height as f32 * 2.0,
-    ]
+    [point.0 / width as f32 * 2.0 - 1.0, 1.0 - point.1 / height as f32 * 2.0]
 }
 
 /// Perímetro centrado en el origen. Se triangula como un abanico durante el render.
@@ -357,12 +356,9 @@ fn shape_points(kind: &ShapeKind, width: f32, height: f32) -> Vec<(f32, f32)> {
     }
 
     match kind {
-        ShapeKind::Rectangle => vec![
-            (-w / 2.0, -h / 2.0),
-            (w / 2.0, -h / 2.0),
-            (w / 2.0, h / 2.0),
-            (-w / 2.0, h / 2.0),
-        ],
+        ShapeKind::Rectangle => {
+            vec![(-w / 2.0, -h / 2.0), (w / 2.0, -h / 2.0), (w / 2.0, h / 2.0), (-w / 2.0, h / 2.0)]
+        }
         ShapeKind::Ellipse => (0..64)
             .map(|i| {
                 let angle = i as f32 / 64.0 * TAU - std::f32::consts::FRAC_PI_2;
@@ -426,11 +422,7 @@ mod tests {
             background: Background::Transparent,
             items: vec![shutter_render::Item {
                 layer: 1,
-                primitive: Primitive::Shape {
-                    kind: ShapeKind::Rectangle,
-                    width: 16.0,
-                    height: 16.0,
-                },
+                primitive: Primitive::Shape { kind: ShapeKind::Rectangle, width: 16.0, height: 16.0 },
                 transform: Affine::translate(16.0, 16.0),
                 opacity: 1.0,
                 fill: Some([1.0, 0.0, 0.0, 1.0]),
