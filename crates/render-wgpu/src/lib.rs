@@ -147,10 +147,7 @@ impl GpuRenderer {
                 ..Default::default()
             },
             depth_stencil: None,
-            multisample: wgpu::MultisampleState {
-                count: SAMPLE_COUNT,
-                ..Default::default()
-            },
+            multisample: wgpu::MultisampleState { count: SAMPLE_COUNT, ..Default::default() },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
                 entry_point: Some("fs_main"),
