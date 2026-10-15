@@ -199,10 +199,11 @@ impl GpuRenderer {
 
             let first = vertices.len() as u32;
             let center = to_clip(item.transform.apply(0.0, 0.0), scene.width, scene.height);
-            for index in 0..points.len() {
-                let a = to_clip(item.transform.apply(points[index].0, points[index].1), scene.width, scene.height);
+            for (index, point) in points.iter().enumerate() {
+                let a = to_clip(item.transform.apply(point.0, point.1), scene.width, scene.height);
                 let next = (index + 1) % points.len();
-                let b = to_clip(item.transform.apply(points[next].0, points[next].1), scene.width, scene.height);
+                let next_point = points[next];
+                let b = to_clip(item.transform.apply(next_point.0, next_point.1), scene.width, scene.height);
                 vertices.push(Vertex { position: center, color: rgba });
                 vertices.push(Vertex { position: a, color: rgba });
                 vertices.push(Vertex { position: b, color: rgba });
