@@ -428,7 +428,7 @@ mod tests {
             background: Background::Transparent,
             items: vec![shutter_render::Item {
                 layer: 1,
-                primitive: Primitive::Shape { kind: ShapeKind::Rectangle, width: 16.0, height: 16.0 },
+                primitive: Primitive::Shape { kind: ShapeKind::Rectangle, width: 15.0, height: 16.0 },
                 transform: Affine::translate(16.0, 16.0),
                 opacity: 1.0,
                 fill: Some([1.0, 0.0, 0.0, 1.0]),
