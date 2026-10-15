@@ -1,9 +1,9 @@
 //! Backend GPU inicial de Shutter.
 //!
 //! Esta versión dibuja formas rellenas mediante mallas de triángulos en una
-//! textura RGBA8 fuera de pantalla y permite leer el resultado como RGBA
-//! premultiplicado. Aún no implementa antialiasing, grupos, máscaras ni modos
-//! de mezcla distintos de Normal.
+//! textura RGBA8 fuera de pantalla con MSAA 4x y permite leer el resultado como
+//! RGBA premultiplicado. Aún no implementa grupos, máscaras ni modos de mezcla
+//! distintos de Normal.
 
 use std::{borrow::Cow, sync::mpsc};
 
@@ -12,6 +12,7 @@ use shutter_render::{Primitive, Scene};
 use wgpu::util::DeviceExt;
 
 const COLOR_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8Unorm;
+const SAMPLE_COUNT: u32 = 4;
 const SHADER: &str = r#"
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,
@@ -146,7 +147,10 @@ impl GpuRenderer {
                 ..Default::default()
             },
             depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: wgpu::MultisampleState {
+                count: SAMPLE_COUNT,
+                ..Default::default()
+            },
             fragment: Some(wgpu::FragmentState {
                 module: &shader,
                 entry_point: Some("fs_main"),
@@ -224,6 +228,17 @@ impl GpuRenderer {
             view_formats: &[],
         });
         let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let multisample_texture = self.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("shutter-render-wgpu-msaa"),
+            size: wgpu::Extent3d { width: scene.width, height: scene.height, depth_or_array_layers: 1 },
+            mip_level_count: 1,
+            sample_count: SAMPLE_COUNT,
+            dimension: wgpu::TextureDimension::D2,
+            format: COLOR_FORMAT,
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            view_formats: &[],
+        });
+        let multisample_view = multisample_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
         let vertex_buffer = (!vertices.is_empty()).then(|| {
             self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
@@ -252,9 +267,9 @@ impl GpuRenderer {
             let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("shutter-render-wgpu-pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
+                    view: &multisample_view,
                     depth_slice: None,
-                    resolve_target: None,
+                    resolve_target: Some(&view),
                     ops: wgpu::Operations {
                         load: wgpu::LoadOp::Clear(background_color(scene.background)),
                         store: wgpu::StoreOp::Store,
