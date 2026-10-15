@@ -69,6 +69,16 @@ impl std::fmt::Display for GpuError {
 
 impl std::error::Error for GpuError {}
 
+fn validate_dimensions(width: u32, height: u32, max: u32) -> Result<(), GpuError> {
+    if width == 0 || height == 0 {
+        return Err(GpuError::InvalidSize);
+    }
+    if width > max || height > max {
+        return Err(GpuError::SizeExceedsDeviceLimit { width, height, max });
+    }
+    Ok(())
+}
+
 /// Imagen GPU leída de vuelta a CPU en RGBA8 premultiplicado.
 #[derive(Clone, Debug)]
 pub struct GpuFrame {
@@ -177,16 +187,7 @@ impl GpuRenderer {
     /// Esta versión acepta solo BlendMode::Normal; los demás modos producen
     /// un error explícito para no cambiar silenciosamente su semántica.
     pub fn render(&self, scene: &Scene) -> Result<GpuFrame, GpuError> {
-        if scene.width == 0 || scene.height == 0 {
-            return Err(GpuError::InvalidSize);
-        }
-        if scene.width > self.max_texture_dimension_2d || scene.height > self.max_texture_dimension_2d {
-            return Err(GpuError::SizeExceedsDeviceLimit {
-                width: scene.width,
-                height: scene.height,
-                max: self.max_texture_dimension_2d,
-            });
-        }
+        validate_dimensions(scene.width, scene.height, self.max_texture_dimension_2d)?;
 
         let mut vertices = Vec::new();
         let mut draws: Vec<std::ops::Range<u32>> = Vec::new();
@@ -409,6 +410,30 @@ fn shape_points(kind: &ShapeKind, width: f32, height: f32) -> Vec<(f32, f32)> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn dimensions_reject_zero_sized_frames() {
+        assert!(matches!(validate_dimensions(0, 10, 4096), Err(GpuError::InvalidSize)));
+        assert!(matches!(validate_dimensions(10, 0, 4096), Err(GpuError::InvalidSize)));
+    }
+
+    #[test]
+    fn dimensions_reject_frames_over_device_limit() {
+        assert!(matches!(
+            validate_dimensions(4097, 1080, 4096),
+            Err(GpuError::SizeExceedsDeviceLimit { width: 4097, height: 1080, max: 4096 })
+        ));
+        assert!(matches!(
+            validate_dimensions(1080, 4097, 4096),
+            Err(GpuError::SizeExceedsDeviceLimit { width: 1080, height: 4097, max: 4096 })
+        ));
+    }
+
+    #[test]
+    fn dimensions_accept_frames_at_device_limit() {
+        assert!(validate_dimensions(4096, 2160, 4096).is_ok());
+        assert!(validate_dimensions(2160, 4096, 4096).is_ok());
+    }
+
     use super::*;
     use shutter_render::Affine;
 
