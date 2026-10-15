@@ -8,7 +8,7 @@
 use std::{borrow::Cow, sync::mpsc};
 
 use shutter_core::{Background, BlendMode, ShapeKind};
-use shutter_render::{Affine, Primitive, Scene};
+use shutter_render::{Primitive, Scene};
 use wgpu::util::DeviceExt;
 
 const COLOR_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8Unorm;
@@ -123,7 +123,7 @@ impl GpuRenderer {
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: Some("shutter-render-wgpu-pipeline-layout"),
             bind_group_layouts: &[],
-            push_constant_ranges: &[],
+            immediate_size: 0,
         });
 
         let attributes = wgpu::vertex_attr_array![0 => Float32x2, 1 => Float32x4];
@@ -134,11 +134,11 @@ impl GpuRenderer {
                 module: &shader,
                 entry_point: Some("vs_main"),
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
-                buffers: &[wgpu::VertexBufferLayout {
+                buffers: &[Some(wgpu::VertexBufferLayout {
                     array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
                     step_mode: wgpu::VertexStepMode::Vertex,
                     attributes: &attributes,
-                }],
+                })],
             },
             primitive: wgpu::PrimitiveState {
                 topology: wgpu::PrimitiveTopology::TriangleList,
@@ -157,7 +157,7 @@ impl GpuRenderer {
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
             }),
-            multiview: None,
+            multiview_mask: None,
             cache: None,
         });
 
@@ -271,6 +271,7 @@ impl GpuRenderer {
                 depth_stencil_attachment: None,
                 timestamp_writes: None,
                 occlusion_query_set: None,
+                multiview_mask: None,
             });
             if let Some(buffer) = &vertex_buffer {
                 pass.set_pipeline(&self.pipeline);
@@ -312,7 +313,9 @@ impl GpuRenderer {
             .map_err(|e| GpuError::Readback(e.to_string()))?
             .map_err(|e| GpuError::Readback(e.to_string()))?;
 
-        let mapped = slice.get_mapped_range();
+        let mapped = slice
+            .get_mapped_range()
+            .map_err(|e| GpuError::Readback(e.to_string()))?;
         let mut pixels = vec![0; (u64::from(scene.width) * u64::from(scene.height) * 4) as usize];
         for row in 0..scene.height as usize {
             let src_start = row * padded_bytes_per_row as usize;
@@ -391,6 +394,7 @@ fn shape_points(kind: &ShapeKind, width: f32, height: f32) -> Vec<(f32, f32)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use shutter_render::Affine;
 
     #[test]
     fn row_alignment_handles_unaligned_widths() {
