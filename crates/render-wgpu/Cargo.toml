@@ -1,0 +1,13 @@
+[package]
+name = "shutter-render-wgpu"
+description = "Backend de renderizado GPU experimental para Shutter."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+shutter-core.workspace = true
+shutter-render.workspace = true
+wgpu.workspace = true
+pollster.workspace = true
+bytemuck.workspace = true

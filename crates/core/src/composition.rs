@@ -534,6 +534,19 @@ mod tests {
     }
 
     #[test]
+    fn custom_frame_rates_are_preserved_without_a_preset_limit() {
+        let mut c = Composition::new(AspectRatio::R1x1, Resolution::P1080, 300_000, Background::Black);
+        assert_eq!(c.fps, 300_000);
+
+        // The project format must preserve custom FPS values too.
+        c.duration = 0.001;
+        let project = Project::new("Extreme FPS experiment", c);
+        let json = serde_json::to_string(&project).unwrap();
+        let back: Project = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.composition.fps, 300_000);
+    }
+
+    #[test]
     fn project_survives_a_json_roundtrip_with_animation() {
         let mut c = comp();
         let id = c.add_layer("Rect", shape());
