@@ -42,6 +42,7 @@ pub enum GpuError {
     NoAdapter(String),
     RequestDevice(String),
     InvalidSize,
+    SizeExceedsDeviceLimit { width: u32, height: u32, max: u32 },
     UnsupportedBlend(BlendMode),
     Readback(String),
     DevicePoll(String),
@@ -53,6 +54,10 @@ impl std::fmt::Display for GpuError {
             Self::NoAdapter(e) => write!(f, "no se encontró un adaptador wgpu: {e}"),
             Self::RequestDevice(e) => write!(f, "no se pudo crear el dispositivo wgpu: {e}"),
             Self::InvalidSize => write!(f, "el tamaño de la composición debe ser mayor que cero"),
+            Self::SizeExceedsDeviceLimit { width, height, max } => write!(
+                f,
+                "la composición {width}x{height} excede el límite de textura 2D del dispositivo ({max})"
+            ),
             Self::UnsupportedBlend(mode) => {
                 write!(f, "el backend wgpu inicial aún no admite el modo {mode:?}")
             }
@@ -96,6 +101,7 @@ pub struct GpuRenderer {
     device: wgpu::Device,
     queue: wgpu::Queue,
     pipeline: wgpu::RenderPipeline,
+    max_texture_dimension_2d: u32,
 }
 
 impl GpuRenderer {
@@ -115,6 +121,7 @@ impl GpuRenderer {
             .request_device(&wgpu::DeviceDescriptor::default())
             .await
             .map_err(|e| GpuError::RequestDevice(e.to_string()))?;
+        let max_texture_dimension_2d = device.limits().max_texture_dimension_2d;
 
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
             label: Some("shutter-render-wgpu-shader"),
@@ -162,7 +169,7 @@ impl GpuRenderer {
             cache: None,
         });
 
-        Ok(Self { device, queue, pipeline })
+        Ok(Self { device, queue, pipeline, max_texture_dimension_2d })
     }
 
     /// Renderiza una Scene en GPU y devuelve RGBA8 premultiplicado.
@@ -172,6 +179,13 @@ impl GpuRenderer {
     pub fn render(&self, scene: &Scene) -> Result<GpuFrame, GpuError> {
         if scene.width == 0 || scene.height == 0 {
             return Err(GpuError::InvalidSize);
+        }
+        if scene.width > self.max_texture_dimension_2d || scene.height > self.max_texture_dimension_2d {
+            return Err(GpuError::SizeExceedsDeviceLimit {
+                width: scene.width,
+                height: scene.height,
+                max: self.max_texture_dimension_2d,
+            });
         }
 
         let mut vertices = Vec::new();
