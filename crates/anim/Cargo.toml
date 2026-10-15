@@ -1,0 +1,12 @@
+[package]
+name = "shutter-anim"
+description = "Keyframes, interpolación y curvas de easing."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

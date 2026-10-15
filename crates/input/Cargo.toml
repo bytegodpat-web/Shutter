@@ -1,0 +1,8 @@
+[package]
+name = "shutter-input"
+description = "Traduce eventos crudos de mouse y teclado a acciones semánticas del editor."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]

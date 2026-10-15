@@ -1,0 +1,13 @@
+[package]
+name = "shutter-core"
+description = "Modelo del documento: proyecto, composición, capas y propiedades."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde.workspace = true
+shutter-anim.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true
