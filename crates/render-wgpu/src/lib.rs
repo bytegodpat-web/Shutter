@@ -439,6 +439,11 @@ mod tests {
         let cpu = shutter_render::render(&scene).expect("render CPU");
         assert_eq!(gpu.pixel(16, 16), cpu.pixel(16, 16));
         assert_eq!(gpu.pixel(0, 0), [0, 0, 0, 0]);
+        let edge_alpha = gpu.pixel(8, 16)[3];
+        assert!(
+            edge_alpha > 0 && edge_alpha < 255,
+            "MSAA debería suavizar el borde; alpha del píxel de borde: {edge_alpha}"
+        );
         assert_eq!(gpu.width, cpu.width);
         assert_eq!(gpu.height, cpu.height);
     }
