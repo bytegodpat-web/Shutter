@@ -535,12 +535,7 @@ mod tests {
 
     #[test]
     fn custom_frame_rates_are_preserved_without_a_preset_limit() {
-        let mut c = Composition::new(
-            AspectRatio::R1x1,
-            Resolution::P1080,
-            300_000,
-            Background::Black,
-        );
+        let mut c = Composition::new(AspectRatio::R1x1, Resolution::P1080, 300_000, Background::Black);
         assert_eq!(c.fps, 300_000);
 
         // The project format must preserve custom FPS values too.
