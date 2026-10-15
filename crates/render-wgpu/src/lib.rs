@@ -202,18 +202,10 @@ impl GpuRenderer {
             let first = vertices.len() as u32;
             let center = to_clip(item.transform.apply(0.0, 0.0), scene.width, scene.height);
             for (index, point) in points.iter().enumerate() {
-                let a = to_clip(
-                    item.transform.apply(point.0, point.1),
-                    scene.width,
-                    scene.height,
-                );
+                let a = to_clip(item.transform.apply(point.0, point.1), scene.width, scene.height);
                 let next = (index + 1) % points.len();
                 let next_point = points[next];
-                let b = to_clip(
-                    item.transform.apply(next_point.0, next_point.1),
-                    scene.width,
-                    scene.height,
-                );
+                let b = to_clip(item.transform.apply(next_point.0, next_point.1), scene.width, scene.height);
                 vertices.push(Vertex { position: center, color: rgba });
                 vertices.push(Vertex { position: a, color: rgba });
                 vertices.push(Vertex { position: b, color: rgba });
@@ -313,9 +305,7 @@ impl GpuRenderer {
             .map_err(|e| GpuError::Readback(e.to_string()))?
             .map_err(|e| GpuError::Readback(e.to_string()))?;
 
-        let mapped = slice
-            .get_mapped_range()
-            .map_err(|e| GpuError::Readback(e.to_string()))?;
+        let mapped = slice.get_mapped_range().map_err(|e| GpuError::Readback(e.to_string()))?;
         let mut pixels = vec![0; (u64::from(scene.width) * u64::from(scene.height) * 4) as usize];
         for row in 0..scene.height as usize {
             let src_start = row * padded_bytes_per_row as usize;
