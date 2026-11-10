@@ -2,7 +2,7 @@
 
 A Alight Motion alternative for pc
 
-Editor de motion graphics y video para **escritorio** (Windows, macOS y Linux), escrito en Rust.
+Editor de motion graphics y video para **escritorio** (Linux, macOS y Windows), escrito en Rust.
 
 > **Estado:** muy temprano. Existen el modelo del documento, el motor de animación, la capa de entrada y
 > un rasterizador por CPU que dibuja formas animadas. Todavía no hay interfaz, render en GPU ni exportación.
